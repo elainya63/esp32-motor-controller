@@ -5,13 +5,18 @@
   
   targetPkgs = pkgs: with pkgs; [
     arduino-cli
-    udev       # Provides libudev.so.1 for tools like picotool
-    libusb1    # Needed for various programmer boards
-    pkg-config # Helps tools discover installed libraries
-    zlib       # Common dependency for compiled tools
+    
+    # specific arduino utils
+    udev       
+    libusb1    
+    pkg-config
+    zlib
+    
+    llvmPackages.clang-tools     # required for arduino lsp (maybe not?)
+    arduino-language-server # lsp, duh
   ];
 
-  # Ensures arduino-cli uses standard data directories in your home folder
+  # fucky directory stuff
   profile = ''
     export ARDUINO_DATA_DIR="$HOME/.arduino15"
   '';
