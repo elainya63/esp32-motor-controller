@@ -13,13 +13,15 @@
 // variables and shit
 BluetoothSerial SerialBT;
 String text = ""; // io buffer of some sort
-enum BT { CTL_ON, CTL_OFF, UNDEFINED }; // input states, increase in future
+enum BT { CTL_ON, CTL_OFF, CTL_REV }; // input states, increase in future
 int BT = CTL_OFF; // default state
 
 // motor setup
 int motor1Pin1 = 27; 
 int motor1Pin2 = 26; 
-int enable1Pin = 14; 
+int motor2Pin1 = 25;
+int motor2Pin2 = 33;
+int enable1Pin = 14; // pwm output, same for all motors  
  
 // PWM properties...
 const int freq = 30000;
@@ -37,7 +39,7 @@ void setup() {
  
   Serial.begin(115200); // serial monitor
 
-  SerialBT.begin("Motor Test"); // start bt (motor test is device name)
+  SerialBT.begin("Motor Controller"); // start bt (motor test is device name)
 }
  
 void loop() {
@@ -49,27 +51,36 @@ void loop() {
     text = SerialBT.readStringUntil('\n'); 
     text.trim(); // only get the actual usable stuff
 
-    if (text == "Motor On"){ BT = CTL_ON; }
+    if      (text == "Motor On") { BT = CTL_ON; }
     else if (text == "Motor Off"){ BT = CTL_OFF; }
-    else { BT = UNDEFINED; } // input unrecognised
+    else if (text == "Motor Rev"){ BT = CTL_REV; }
 
     switch (BT) { // match cases to outputs
-      case 0 : // motor on
-          Serial.println("Moving Forward");
-          digitalWrite(motor1Pin1, LOW);
-          digitalWrite(motor1Pin2, HIGH); 
-          ledcWrite(enable1Pin, 255); // Ensure enable pin is fully high
+      case 0 : // motor forward
+        SerialBT.println("Moving Forward");
+        digitalWrite(motor1Pin1, LOW);
+        digitalWrite(motor1Pin2, HIGH); 
+        digitalWrite(motor2Pin1, LOW);
+        digitalWrite(motor2Pin2, HIGH); 
+        ledcWrite(enable1Pin, 200); // Ensure enable pin is fully high
         break;
 
-      case 1 : // motor off
-          Serial.println("Motor stopped");
-          digitalWrite(motor1Pin1, LOW);
-          digitalWrite(motor1Pin2, LOW);
-          ledcWrite(enable1Pin, 0); // Turn off PWM output
+      case 1 : // motor stop
+        SerialBT.println("Motor Stopped");
+        digitalWrite(motor1Pin1, LOW);
+        digitalWrite(motor1Pin2, LOW);
+        digitalWrite(motor2Pin1, LOW);
+        digitalWrite(motor2Pin2, LOW);
+        ledcWrite(enable1Pin, 0); // Turn off PWM output
         break;
 
-      case 2 : // undefined
-        Serial.println("undefined input");
+      case 2 : // reverse motor
+        SerialBT.println("Motor Reversed");
+        digitalWrite(motor1Pin1, HIGH);
+        digitalWrite(motor1Pin2, LOW);
+        digitalWrite(motor2Pin1, HIGH);
+        digitalWrite(motor2Pin2, LOW);
+        ledcWrite(enable1Pin, 200);
         break;
     }
   }
